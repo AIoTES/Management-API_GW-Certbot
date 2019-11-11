@@ -3,7 +3,6 @@ import time
 import datetime
 import os
 import stat
-from os import environ as env
 from subprocess import run
 from OpenSSL import crypto, SSL
 #from time import gmtime, mktime
@@ -29,10 +28,12 @@ def create_self_signed_cert():
     cert.set_pubkey(k)
     cert.sign(k, 'sha1')
 
-    open(CERT_FILE, "wt").write(
-        crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
-    open(KEY_FILE, "wt").write(
-        crypto.dump_privatekey(crypto.FILETYPE_PEM, k))
+    f=open(CERT_FILE, "wb")
+    f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
+    f.close()
+    f=open(KEY_FILE, "wb")
+    f.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, k))
+    f.close()
 
 def check_certs_create_eoc():
     print(datetime.datetime.now()," checking certs")
@@ -44,16 +45,19 @@ def check_certs_create_eoc():
 def certonly():
     print (datetime.datetime.now()," Configuring or renewing certificate")
     print (run(["certbot", "certonly","-n", "--standalone",
-        "--cert-name", "aiotes", 
+        "--cert-name", "aiotes",
         "--keep-until-expiring","--renew-with-new-domains","--agree-tos",
-        "--email" , env.get('AIOTES_SYSADMIN_EMAIL'),
-        "-d", env.get('AIOTES_HOSTNAME')]))
+        "--email" , os.getenv('AIOTES_SYSADMIN_EMAIL','a@a.a'),
+        "-d", os.getenv('AIOTES_HOSTNAME','localhost')]))
     check_certs_create_eoc()
     for root, dirs, files in os.walk("/etc/letsencrypt/"):
         for momo in dirs:
             os.chmod(os.path.join(root, momo), stat.S_IRWXU | stat.S_IRWXG | stat.S_IXOTH )
     for file in cert_files:
-        os.chmod(eg_certs + file, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH )
+        try:
+            os.chmod(eg_certs + file, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH )
+        except:
+            print( "problems with file ", file)
     #print (run(["ls", "-lhaR", "/etc/letsencrypt/"]))
 
 
