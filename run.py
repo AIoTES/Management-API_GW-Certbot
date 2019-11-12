@@ -11,6 +11,7 @@ eg_certs = "/etc/letsencrypt/live/aiotes/"
 cert_files = ['privkey.pem', 'cert.pem', 'chain.pem']
 
 def create_self_signed_cert():
+    CA_FILE = eg_certs+cert_files[2]
     CERT_FILE = eg_certs+cert_files[1]
     KEY_FILE = eg_certs+cert_files[0]
     # create a key pair
@@ -33,6 +34,9 @@ def create_self_signed_cert():
     f.close()
     f=open(KEY_FILE, "wb")
     f.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, k))
+    f.close()
+    f=open(CA_FILE, "wb")
+    f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
     f.close()
 
 def check_certs_create_eoc():
