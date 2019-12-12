@@ -5,6 +5,7 @@ import os
 import stat
 from subprocess import run
 from OpenSSL import crypto, SSL
+import random
 #from time import gmtime, mktime
 
 eg_certs = "/etc/letsencrypt/live/aiotes/"
@@ -22,7 +23,7 @@ def create_self_signed_cert():
     cert = crypto.X509()
     cert.get_subject().O = "AIOTES Instance"
     cert.get_subject().CN = os.getenv('AIOTES_HOSTNAME','localhost')
-    cert.set_serial_number(1000)
+    cert.set_serial_number(random.randint(1001,2147483647))
     cert.gmtime_adj_notBefore(0)
     cert.gmtime_adj_notAfter(10*365*24*60*60)
     cert.set_issuer(cert.get_subject())
