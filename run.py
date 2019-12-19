@@ -11,6 +11,7 @@ import random
 eg_certs = "/etc/letsencrypt/live/aiotes/"
 cert_files = ['privkey.pem', 'cert.pem', 'chain.pem']
 self-signed-flag = "self-signed"
+self-signed-backup = "old"
 
 def touch(fname, times=None):
     with open(fname, 'a'):
@@ -49,11 +50,35 @@ def create_self_signed_cert():
 def check_certs_create_eoc():
     print(datetime.datetime.now()," checking certs")
     if (not (os.path.isdir(eg_certs) & os.path.isfile(eg_certs+cert_files[0]))):
-        print (datetime.datetime.now()," creating self-signed certificates")
-        os.makedirs(eg_certs, mode=0o777, exist_ok=True)
-        create_self_signed_cert()
+        #if the backup exist, the recover it
+        if (os.path.isdir(eg_certs+self-signed-backup)):
+            print (datetime.datetime.now()," Recover self-singed Certificates")
+            for root, dirs, files in os.walk(eg_certs+self-signed-backup):
+                for name in files:
+                os.replace(os.path.join(root, name),os.path.join(eg_certs, name))
+            os.rmdir(eg_certs+self-signed-backup)
+        #else create self-signed certificate
+        else:
+            print (datetime.datetime.now()," creating self-signed certificates")
+            print ("WARNING: Using self-signed certificates, this may not be secure nor stable")
+            os.makedirs(eg_certs, mode=0o777, exist_ok=True)
+            create_self_signed_cert()
+    elif (os.path.isdir(eg_certs+self-signed-backup)):
+        # dir and cert exist if there is a backup it needs to be removed
+        print (datetime.datetime.now()," removing backup of self-self-signed certificate, no longer needed.")
+        for root, dirs, files in os.walk(eg_certs+self-signed-backup):
+            for name in files:
+                os.remove(os.path.join(root, name))
+        os.rmdir(eg_certs+self-signed-backup)
 
 def certonly():
+    #if the current certificate is self-signed, then back it up before retrying letsencrypt
+    if (os.path.isfile(eg_certs+self-signed-flag)):
+        print (datetime.datetime.now()," Backing up self-singed Certificates")
+        os.makedirs(eg_certs+self-signed-backup, mode=0o777, exist_ok=True)
+        for root, dirs, files in os.walk(eg_certs):
+            for name in files:
+            os.replace(os.path.join(root, name),os.path.join(eg_certs+self-signed-backup, name))
     print (datetime.datetime.now()," Configuring or renewing certificate")
     print (run(["certbot", "certonly","-n", "--standalone",
         "--cert-name", "aiotes",
@@ -68,7 +93,7 @@ def certonly():
         try:
             os.chmod(eg_certs + file, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH )
         except:
-            print( "problems with file ", file)
+            print(datetime.datetime.now(), "problems with file ", file)
     #print (run(["ls", "-lhaR", "/etc/letsencrypt/"]))
 
 
