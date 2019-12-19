@@ -10,6 +10,11 @@ import random
 
 eg_certs = "/etc/letsencrypt/live/aiotes/"
 cert_files = ['privkey.pem', 'cert.pem', 'chain.pem']
+self-signed-flag = "self-signed"
+
+def touch(fname, times=None):
+    with open(fname, 'a'):
+        os.utime(fname, times)
 
 def create_self_signed_cert():
     CA_FILE = eg_certs+cert_files[2]
@@ -29,7 +34,7 @@ def create_self_signed_cert():
     cert.set_issuer(cert.get_subject())
     cert.set_pubkey(k)
     cert.sign(k, 'sha256')
-
+    touch(eg_certs+self-signed-flag)
     f=open(CERT_FILE, "wb")
     f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
     f.close()
@@ -39,6 +44,7 @@ def create_self_signed_cert():
     f=open(CA_FILE, "wb")
     f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
     f.close()
+    
 
 def check_certs_create_eoc():
     print(datetime.datetime.now()," checking certs")
