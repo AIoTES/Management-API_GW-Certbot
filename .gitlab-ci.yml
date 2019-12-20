@@ -5,7 +5,7 @@ variables:
 before_script:
   - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
 
-test:
+test-py:
   stage: test
   image: python:3.7-alpine3.10
   before_script:
@@ -14,6 +14,13 @@ test:
   script:
     - python test.py
 
+test-sh:
+  stage: test
+  image: express-gateway
+  before_script:
+  script:
+    - test.sh
+    
 deploy-master:
   stage: deploy
   script:
