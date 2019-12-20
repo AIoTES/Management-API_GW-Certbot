@@ -10,8 +10,8 @@ import random
 
 eg_certs = "/etc/letsencrypt/live/aiotes/"
 cert_files = ['privkey.pem', 'cert.pem', 'chain.pem']
-self-signed-flag = "self-signed"
-self-signed-backup = "old"
+self_signed_flag = "self-signed"
+self_signed_backup = "bkp"
 
 def touch(fname, times=None):
     with open(fname, 'a'):
@@ -34,7 +34,7 @@ def create_self_signed_cert():
     cert.set_issuer(cert.get_subject())
     cert.set_pubkey(k)
     cert.sign(k, 'sha256')
-    touch(eg_certs+self-signed-flag)
+    touch(eg_certs+self_signed_flag)
     f=open(CERT_FILE, "wb")
     f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
     f.close()
@@ -44,40 +44,51 @@ def create_self_signed_cert():
     f=open(CA_FILE, "wb")
     f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
     f.close()
-    
 
+def backup_dir(src,bkp):
+    print (datetime.datetime.now()," Backing up " + src + " to " + bkp)
+    os.makedirs(bkp, mode=0o700, exist_ok=True)
+    for root, dirs, files in os.walk(src):
+        for name in files:
+            os.replace(os.path.join(root, name),os.path.join(bkp, name))
+            
+def recover_dir(src,bkp):
+    print (datetime.datetime.now()," Recover from " + bkp + " to " + src)
+    for root, dirs, files in os.walk(bkp):
+        for name in files:
+            os.replace(os.path.join(root, name),os.path.join(src, name))
+    os.rmdir(bkp)
+
+def remove_dir(trg):
+    for root, dirs, files in os.walk(trg):
+        for name in files:
+            print(datetime.datetime.now()," removing " + os.path.join(root, name))
+            os.remove(os.path.join(root, name))
+    print(datetime.datetime.now()," removing dir " + os.path.join(root, name))
+    os.rmdir(trg)
+    
 def check_certs_create_eoc():
     print(datetime.datetime.now()," checking certs")
     if (not (os.path.isdir(eg_certs) & os.path.isfile(eg_certs+cert_files[0]))):
-        #if the backup exist, the recover it
-        if (os.path.isdir(eg_certs+self-signed-backup)):
-            print (datetime.datetime.now()," Recover self-singed Certificates")
-            for root, dirs, files in os.walk(eg_certs+self-signed-backup):
-                for name in files:
-                    os.replace(os.path.join(root, name),os.path.join(eg_certs, name))
-            os.rmdir(eg_certs+self-signed-backup)
-        #else create self-signed certificate
+        #if certbot not successful
+        if (os.path.isdir(eg_certs+self_signed_backup)):
+            #if the backup exist, then recover it
+            recover_dir(eg_certs,eg_certs+self_signed_backup)
         else:
+            #else create self-signed certificate
             print (datetime.datetime.now()," creating self-signed certificates")
             print ("WARNING: Using self-signed certificates, this may not be secure nor stable")
-            os.makedirs(eg_certs, mode=0o777, exist_ok=True)
+            os.makedirs(eg_certs, mode=0o700, exist_ok=True)
             create_self_signed_cert()
-    elif (os.path.isdir(eg_certs+self-signed-backup)):
-        # dir and cert exist if there is a backup it needs to be removed
-        print (datetime.datetime.now()," removing backup of self-self-signed certificate, no longer needed.")
-        for root, dirs, files in os.walk(eg_certs+self-signed-backup):
-            for name in files:
-                os.remove(os.path.join(root, name))
-        os.rmdir(eg_certs+self-signed-backup)
+    elif (os.path.isdir(eg_certs+self_signed_backup)):
+        # dir and cert exist (certbot was successful after ssc where backedup) if there is a backup it needs to be removed
+        print (datetime.datetime.now()," removing backup of self-signed certificate, no longer needed.")
+        remove_dir(eg_certs+self_signed_backup)
 
 def certonly():
     #if the current certificate is self-signed, then back it up before retrying letsencrypt
-    if (os.path.isfile(eg_certs+self-signed-flag)):
-        print (datetime.datetime.now()," Backing up self-singed Certificates")
-        os.makedirs(eg_certs+self-signed-backup, mode=0o777, exist_ok=True)
-        for root, dirs, files in os.walk(eg_certs):
-            for name in files:
-                os.replace(os.path.join(root, name),os.path.join(eg_certs+self-signed-backup, name))
+    if (os.path.isfile(eg_certs+self_signed_flag)):
+        backup_dir(eg_certs,eg_certs+self_signed_backup)
     print (datetime.datetime.now()," Configuring or renewing certificate")
     print (run(["certbot", "certonly","-n", "--standalone",
         "--cert-name", "aiotes",
@@ -96,11 +107,10 @@ def certonly():
     #print (run(["ls", "-lhaR", "/etc/letsencrypt/"]))
 
 
-    
-print(datetime.datetime.now()," Initialising Certbot pySchedule")
-certonly()
-schedule.every().monday.do(certonly)
-
-while True:
-    schedule.run_pending()
-    time.sleep(1)
+if __name__ == "__main__":
+    print(datetime.datetime.now()," Initialising Certbot pySchedule")
+    certonly()
+    schedule.every().monday.do(certonly)
+    while True:
+        schedule.run_pending()
+        time.sleep(1)
