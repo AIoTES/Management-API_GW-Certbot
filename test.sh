@@ -1,4 +1,3 @@
-#!/bin/sh
 #check if certificates are self-signed
 if [ -f "/var/lib/certs/live/aiotes/self-signed" ]; then
     echo "self-signed certificate detected"
