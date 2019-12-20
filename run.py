@@ -24,7 +24,6 @@ def create_self_signed_cert():
     # create a key pair
     k = crypto.PKey()
     k.generate_key(crypto.TYPE_RSA, 4096)
-
     # create a self-signed cert
     cert = crypto.X509()
     cert.get_subject().O = "AIOTES Instance"
@@ -55,7 +54,7 @@ def check_certs_create_eoc():
             print (datetime.datetime.now()," Recover self-singed Certificates")
             for root, dirs, files in os.walk(eg_certs+self-signed-backup):
                 for name in files:
-                os.replace(os.path.join(root, name),os.path.join(eg_certs, name))
+                    os.replace(os.path.join(root, name),os.path.join(eg_certs, name))
             os.rmdir(eg_certs+self-signed-backup)
         #else create self-signed certificate
         else:
@@ -78,7 +77,7 @@ def certonly():
         os.makedirs(eg_certs+self-signed-backup, mode=0o777, exist_ok=True)
         for root, dirs, files in os.walk(eg_certs):
             for name in files:
-            os.replace(os.path.join(root, name),os.path.join(eg_certs+self-signed-backup, name))
+                os.replace(os.path.join(root, name),os.path.join(eg_certs+self-signed-backup, name))
     print (datetime.datetime.now()," Configuring or renewing certificate")
     print (run(["certbot", "certonly","-n", "--standalone",
         "--cert-name", "aiotes",
