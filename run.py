@@ -30,7 +30,7 @@ def create_self_signed_cert():
     cert.get_subject().CN = os.getenv('AIOTES_HOSTNAME','localhost')
     cert.set_serial_number(random.randint(1001,2147483647))
     cert.gmtime_adj_notBefore(0)
-    cert.gmtime_adj_notAfter(10*365*24*60*60)
+    cert.gmtime_adj_notAfter(365*24*60*60)
     cert.set_issuer(cert.get_subject())
     cert.set_pubkey(k)
     cert.sign(k, 'sha256')
@@ -113,4 +113,4 @@ if __name__ == "__main__":
     schedule.every().monday.do(certonly)
     while True:
         schedule.run_pending()
-        time.sleep(1)
+        time.sleep(12100)
