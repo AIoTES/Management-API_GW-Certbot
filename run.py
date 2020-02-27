@@ -89,6 +89,7 @@ def certonly():
     #if the current certificate is self-signed, then back it up before retrying letsencrypt
     if (os.path.isfile(eg_certs+self_signed_flag)):
         backup_dir(eg_certs,eg_certs+self_signed_backup)
+    #create or renew certificates with certbot
     print (datetime.datetime.now()," Configuring or renewing certificate")
     print (run(["certbot", "certonly","-n", "--standalone",
         "--cert-name", "aiotes",
@@ -96,9 +97,11 @@ def certonly():
         "--email" , os.getenv('AIOTES_SYSADMIN_EMAIL','a@a.a'),
         "-d", os.getenv('AIOTES_HOSTNAME','localhost')]))
     check_certs_create_eoc()
+    #Change access to all dirs
     for root, dirs, files in os.walk("/etc/letsencrypt/"):
         for momo in dirs:
             os.chmod(os.path.join(root, momo), stat.S_IRWXU | stat.S_IRWXG | stat.S_IXOTH )
+    #Change acces to certs
     for file in cert_files:
         try:
             os.chmod(eg_certs + file, stat.S_IRWXU | stat.S_IRGRP | stat.S_IROTH )
