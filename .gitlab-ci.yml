@@ -14,12 +14,12 @@ test-py:
   script:
     - python test.py
 
-test-sh:
-  stage: test
-  image: express-gateway
-  before_script:
-  script:
-    - test.sh
+#test-sh:
+#  stage: test
+#  image: express-gateway
+#  before_script:
+#  script:
+#    - test.sh
     
 deploy-master:
   stage: deploy
