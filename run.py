@@ -7,6 +7,7 @@ from subprocess import run
 from OpenSSL import crypto, SSL
 import random
 #from time import gmtime, mktime
+#manage JKS with https://github.com/kurtbrose/pyjks
 
 eg_certs = "/etc/letsencrypt/live/aiotes/"
 cert_files = ['privkey.pem', 'cert.pem', 'chain.pem']
@@ -93,7 +94,7 @@ def certonly():
     print (datetime.datetime.now()," Configuring or renewing certificate")
     print (run(["certbot", "certonly","-n", "--standalone",
         "--cert-name", "aiotes",
-        "--keep-until-expiring","--renew-with-new-domains","--agree-tos",
+        "--keep-until-expiring","--agree-tos",
         "--email" , os.getenv('AIOTES_SYSADMIN_EMAIL','a@a.a'),
         "-d", os.getenv('AIOTES_HOSTNAME','localhost')]))
     check_certs_create_eoc()
