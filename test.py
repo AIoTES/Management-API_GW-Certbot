@@ -10,6 +10,7 @@ from run import certonly
 
 eg_certs = "/etc/letsencrypt/live/aiotes/"
 backup = "bkp"
+#keystore = "keystore.jks"
 
 #test touch
 test_touch="test"
@@ -26,7 +27,8 @@ check_certs_create_eoc()
 if (not os.path.isfile(eg_certs+'privkey.pem') and 
     not os.path.isfile(eg_certs+'cert.pem') and 
     not os.path.isfile(eg_certs+'chain.pem') and 
-    not os.path.isfile(eg_certs+'self-signed') ):
+    not os.path.isfile(eg_certs+'self-signed') and
+    not os.path.isfile(eg_certs+'keystore.jks') ):
     sys.exit(-1)
 #TODO: check cert and chain are the same
 

@@ -5,12 +5,13 @@ import os
 import stat
 from subprocess import run
 from OpenSSL import crypto, SSL
+import jks # https://github.com/kurtbrose/pyjks
 import random
 #from time import gmtime, mktime
-#manage JKS with https://github.com/kurtbrose/pyjks
 
 eg_certs = "/etc/letsencrypt/live/aiotes/"
 cert_files = ['privkey.pem', 'cert.pem', 'chain.pem']
+#keystore = "keystore.jks"
 self_signed_flag = "self-signed"
 self_signed_backup = "bkp"
 
@@ -22,6 +23,7 @@ def create_self_signed_cert():
     CA_FILE = eg_certs+cert_files[2]
     CERT_FILE = eg_certs+cert_files[1]
     KEY_FILE = eg_certs+cert_files[0]
+    KEYSTORE_FILE = eg_certs+"keystore.jks"
     # create a key pair
     k = crypto.PKey()
     k.generate_key(crypto.TYPE_RSA, 4096)
@@ -45,6 +47,12 @@ def create_self_signed_cert():
     f=open(CA_FILE, "wb")
     f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
     f.close()
+    #Generating JKS
+    dumped_cert = crypto.dump_certificate(crypto.FILETYPE_ASN1, cert)
+    dumped_key = crypto.dump_privatekey(crypto.FILETYPE_ASN1, k)
+    pke = jks.PrivateKeyEntry.new('self signed cert', [dumped_cert], dumped_key, 'rsa_raw')
+    keystore = jks.KeyStore.new('jks', [pke])
+    keystore.save(KEYSTORE_FILE, '') #password is empty
 
 def backup_dir(src,bkp):
     print (datetime.datetime.now()," Backing up " + src + " to " + bkp)
