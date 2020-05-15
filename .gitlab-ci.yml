@@ -2,35 +2,35 @@ image: docker:dind
 variables:
   CI_REGISTRY_IMAGE: "$CI_REGISTRY/$CI_PROJECT_NAME"
 
-before_script:
-  - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
+build-certbot:
+  stage: build
+  script:
+    - docker build --pull -t "$CI_REGISTRY_IMAGE" .
+  
 
 test-py:
   stage: test
-  image: python:3.7-alpine3.10
-  before_script:
-    - apk add --no-cache --virtual .build-deps gcc linux-headers openssl-dev musl-dev libffi-dev
-    - pip install schedule pyOpenSSL
   script:
-    - python test.py
+    - docker run --rm -t -v ${PWD}:/test --entrypoint="python" "$CI_REGISTRY_IMAGE" /test/test.py
 
-#test-sh:
-#  stage: test
-#  image: express-gateway
-#  before_script:
-#  script:
-#    - test.sh
+test-sh:
+  stage: test
+  script:
+    - docker run --rm -t -v ${PWD}:/test --entrypoint="/bin/sh" express-gateway /test/test.sh
     
 deploy-master:
   stage: deploy
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
-    - docker build --pull -t "$CI_REGISTRY_IMAGE" .
     - docker push "$CI_REGISTRY_IMAGE"
   only:
     - master
 
 deploy:
   stage: deploy
+  before_script:
+    - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
     - docker build --pull -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG" .
     - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
