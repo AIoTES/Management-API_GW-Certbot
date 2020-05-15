@@ -11,12 +11,20 @@ build-certbot:
 test-py:
   stage: test
   script:
-    - docker run --rm -t -v ${PWD}:/test --entrypoint="python" "$CI_REGISTRY_IMAGE" /test/test.py
+    - echo "COPY test.py /test.py" >> Dockerfile
+    - docker build --pull -t "$CI_REGISTRY_IMAGE-$CI_JOB_NAME" .
+    - docker run --rm --entrypoint="python" "$CI_REGISTRY_IMAGE-$CI_JOB_NAME" /test.py
+  after_script:
+    - docker image rm -f "$CI_REGISTRY_IMAGE-$CI_JOB_NAME"
 
 test-sh:
   stage: test
   script:
-    - docker run --rm -t -v ${PWD}:/test --entrypoint="/bin/sh" express-gateway /test/test.sh
+    - echo "COPY test.sh /test.sh" >> Dockerfile
+    - docker build --pull -t "$CI_REGISTRY_IMAGE-$CI_JOB_NAME" .
+    - docker run --rm --entrypoint="/bin/sh" "$CI_REGISTRY_IMAGE-$CI_JOB_NAME" /test.sh
+  after_script:
+    - docker image rm -f "$CI_REGISTRY_IMAGE-$CI_JOB_NAME"
     
 deploy-master:
   stage: deploy
@@ -24,6 +32,8 @@ deploy-master:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
     - docker push "$CI_REGISTRY_IMAGE"
+  after_script:
+    - docker image rm -f "$CI_REGISTRY_IMAGE"
   only:
     - master
 
@@ -34,5 +44,26 @@ deploy:
   script:
     - docker build --pull -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG" .
     - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
+  after_script:
+    - docker image rm -f "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
   except:
     - master
+
+mirror-git:
+  stage: deploy
+  image: alpine
+  cache: {}
+  before_script:
+    - apk update
+    - apk add git
+  script:
+    - git clone --mirror ${CI_REPOSITORY_URL} project
+    - cd project
+    - git remote add activage ${ACTIVAGE_PROJECT_URL}.git
+    - git push --mirror activage
+    - cd -
+    - git clone --mirror ${CI_REPOSITORY_URL/\.git/\.wiki\.git} wiki
+    - cd wiki
+    - git remote add activage ${ACTIVAGE_PROJECT_URL}.wiki.git
+    - git push --mirror activage
+
