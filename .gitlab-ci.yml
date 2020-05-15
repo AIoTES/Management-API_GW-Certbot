@@ -32,8 +32,6 @@ deploy-master:
     - docker login -u "$CI_REGISTRY_USER" -p "$CI_REGISTRY_PASSWORD" $CI_REGISTRY
   script:
     - docker push "$CI_REGISTRY_IMAGE"
-  after_script:
-    - docker image rm -f "$CI_REGISTRY_IMAGE"
   only:
     - master
 
@@ -44,8 +42,6 @@ deploy:
   script:
     - docker build --pull -t "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG" .
     - docker push "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
-  after_script:
-    - docker image rm -f "$CI_REGISTRY_IMAGE:$CI_COMMIT_REF_SLUG"
   except:
     - master
 
