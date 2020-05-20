@@ -23,13 +23,13 @@ if (exist_before or not exist_after):
 
 #test uid change
 print('uid,euid =', os.getuid(),os.geteuid())
-os.chown("/etc/letsencrypt/", 2, 0)
+os.chown("/etc/letsencrypt/", 1000, 1000)
 for root, dirs, files in os.walk("/etc/letsencrypt/"):  
   for momo in dirs:  
-    os.chown(os.path.join(root, momo), 2, 0)
+    os.chown(os.path.join(root, momo), 1000, 1000)
   for momo in files:
-    os.chown(os.path.join(root, momo), 2, 0)
-os.setuid(2)
+    os.chown(os.path.join(root, momo), 1000, 1000)
+os.setuid(1000)
 print('uid,euid =', os.getuid(),os.geteuid())
 
 #test create_self_signed_cert
