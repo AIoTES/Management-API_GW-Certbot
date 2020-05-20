@@ -120,6 +120,14 @@ def certonly():
 
 
 if __name__ == "__main__":
+    print(datetime.datetime.now()," seting up dir, and switching uid.")
+    os.chown("/etc/letsencrypt/", 2, 0)
+    for root, dirs, files in os.walk("/etc/letsencrypt/"):  
+      for momo in dirs:  
+        os.chown(os.path.join(root, momo), 2, 0)
+      for momo in files:
+        os.chown(os.path.join(root, momo), 2, 0)
+    os.setuid(2)
     print(datetime.datetime.now()," Initialising Certbot pySchedule")
     certonly()
     schedule.every().monday.do(certonly)

@@ -13,13 +13,24 @@ backup = "bkp"
 #keystore = "keystore.jks"
 
 #test touch
-test_touch="test"
+test_touch="/tmp/test"
 exist_before=os.path.isfile(test_touch)
 touch(test_touch)
 exist_after=os.path.isfile(test_touch)
 touch(test_touch)
 if (exist_before or not exist_after):
     sys.exit(-1)
+
+#test uid change
+print('uid,euid =', os.getuid(),os.geteuid())
+os.chown("/etc/letsencrypt/", 2, 0)
+for root, dirs, files in os.walk("/etc/letsencrypt/"):  
+  for momo in dirs:  
+    os.chown(os.path.join(root, momo), 2, 0)
+  for momo in files:
+    os.chown(os.path.join(root, momo), 2, 0)
+os.setuid(2)
+print('uid,euid =', os.getuid(),os.geteuid())
 
 #test create_self_signed_cert
 check_certs_create_eoc()
