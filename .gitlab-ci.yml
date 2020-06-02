@@ -47,11 +47,10 @@ deploy:
 
 mirror-git:
   stage: deploy
-  image: alpine
+  image:
+    name: alpine/git
+    entrypoint: ["/bin/sh", "-c"]
   cache: {}
-  before_script:
-    - apk update
-    - apk add git
   script:
     - git clone --mirror ${CI_REPOSITORY_URL} project
     - cd project
