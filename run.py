@@ -29,6 +29,7 @@ def create_self_signed_cert():
     k.generate_key(crypto.TYPE_RSA, 4096)
     # create a self-signed cert
     cert = crypto.X509()
+    cert.set_version(2)
     cert.get_subject().O = "AIOTES Instance"
     cert.get_subject().CN = os.getenv('AIOTES_HOSTNAME','localhost')
     cert.set_serial_number(random.randint(1001,2147483647))
@@ -121,6 +122,9 @@ def certonly():
 
 if __name__ == "__main__":
     print(datetime.datetime.now()," seting up dir, and switching uid.")
+    os.makedirs('/var/log/letsencrypt/')
+    os.chown("/var/log/letsencrypt/", 1000, 1000)
+    os.chown("/var/lib/letsencrypt/", 1000, 1000)
     os.chown("/etc/letsencrypt/", 1000, 1000)
     for root, dirs, files in os.walk("/etc/letsencrypt/"):  
       for momo in dirs:  
