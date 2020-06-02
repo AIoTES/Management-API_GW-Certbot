@@ -23,52 +23,13 @@ def create_self_signed_cert():
     CA_FILE = eg_certs+cert_files[2]
     CERT_FILE = eg_certs+cert_files[1]
     KEY_FILE = eg_certs+cert_files[0]
-    KEYSTORE_FILE = eg_certs+"keystore.jks"
-    # create a key pair
-    k = crypto.PKey()
-    k.generate_key(crypto.TYPE_RSA, 4096)
-    # create a self-signed cert
-    cert = crypto.X509()
-    cert.set_version(2)
-    cert.get_subject().O = "AIOTES Instance"
-    cert.get_subject().CN = os.getenv('AIOTES_HOSTNAME','localhost')
-    cert.set_serial_number(random.randint(1001,2147483647))
-    cert.gmtime_adj_notBefore(0)
-    cert.gmtime_adj_notAfter(365*24*60*60)
-    cert.set_issuer(cert.get_subject())
-    cert.set_pubkey(k)
-    cert.add_extensions([
-            crypto.X509Extension(b"subjectKeyIdentifier",
-                                 True,
-                                 b"hash",
-                                 subject=cert),
-            crypto.X509Extension(b"keyUsage",
-                                 True,
-                                 b"keyCertSign, cRLSign"),
-            crypto.X509Extension(b"basicConstraints",
-                                 True,
-                                 b"CA:TRUE"),
-            ])
-    cert.add_extensions([
-        crypto.X509Extension(b'authorityKeyIdentifier' , False, b'issuer:always, keyid:always', issuer=cert, subject=cert)
-    ])
-    cert.sign(k, 'sha256')
-    touch(eg_certs+self_signed_flag)
-    f=open(CERT_FILE, "wb")
-    f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
-    f.close()
-    f=open(KEY_FILE, "wb")
-    f.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, k))
-    f.close()
-    f=open(CA_FILE, "wb")
-    f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
-    f.close()
-    #Generating JKS
-    dumped_cert = crypto.dump_certificate(crypto.FILETYPE_ASN1, cert)
-    dumped_key = crypto.dump_privatekey(crypto.FILETYPE_ASN1, k)
-    pke = jks.PrivateKeyEntry.new('self signed cert', [dumped_cert], dumped_key, 'rsa_raw')
-    keystore = jks.KeyStore.new('jks', [pke])
-    keystore.save(KEYSTORE_FILE, '') #password is empty
+    print(run(["openssl", "req", "-x509", "-nodes", "-newkey", "rsa:4096", 
+        "-keyout", KEY_FILE,
+        "-out", CERT_FILE,
+        "-days", '365',
+        "-subj", '/O=AIOTES Instance/CN='+os.getenv('AIOTES_HOSTNAME','localhost')
+        ]))
+    print(run(['ln', CERT_FILE, CA_FILE]))
 
 def backup_dir(src,bkp):
     print (datetime.datetime.now()," Backing up " + src + " to " + bkp)
