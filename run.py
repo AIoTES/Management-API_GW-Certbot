@@ -37,6 +37,21 @@ def create_self_signed_cert():
     cert.gmtime_adj_notAfter(365*24*60*60)
     cert.set_issuer(cert.get_subject())
     cert.set_pubkey(k)
+    cert.add_extensions([
+            crypto.X509Extension(b"subjectKeyIdentifier",
+                                 True,
+                                 b"hash",
+                                 subject=cert),
+            crypto.X509Extension(b"keyUsage",
+                                 True,
+                                 b"keyCertSign, cRLSign"),
+            crypto.X509Extension(b"basicConstraints",
+                                 True,
+                                 b"CA:TRUE"),
+            ])
+    cert.add_extensions([
+        crypto.X509Extension(b'authorityKeyIdentifier' , False, b'issuer:always, keyid:always', issuer=cert, subject=cert)
+    ])
     cert.sign(k, 'sha256')
     touch(eg_certs+self_signed_flag)
     f=open(CERT_FILE, "wb")
