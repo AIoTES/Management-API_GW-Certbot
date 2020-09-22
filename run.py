@@ -1,3 +1,17 @@
+# Copyright 2020 universidad Politécnica de Madrid
+#
+# Licensed under the Apache License, Version 2.0 (the "License"); 
+# you may not use this file except in compliance with the License. 
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software 
+# distributed under the License is distributed on an "AS IS" BASIS, 
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
+# See the License for the specific language governing permissions and 
+# limitations under the License.
+
 import schedule
 import time
 import datetime
@@ -23,36 +37,13 @@ def create_self_signed_cert():
     CA_FILE = eg_certs+cert_files[2]
     CERT_FILE = eg_certs+cert_files[1]
     KEY_FILE = eg_certs+cert_files[0]
-    KEYSTORE_FILE = eg_certs+"keystore.jks"
-    # create a key pair
-    k = crypto.PKey()
-    k.generate_key(crypto.TYPE_RSA, 4096)
-    # create a self-signed cert
-    cert = crypto.X509()
-    cert.get_subject().O = "AIOTES Instance"
-    cert.get_subject().CN = os.getenv('AIOTES_HOSTNAME','localhost')
-    cert.set_serial_number(random.randint(1001,2147483647))
-    cert.gmtime_adj_notBefore(0)
-    cert.gmtime_adj_notAfter(365*24*60*60)
-    cert.set_issuer(cert.get_subject())
-    cert.set_pubkey(k)
-    cert.sign(k, 'sha256')
-    touch(eg_certs+self_signed_flag)
-    f=open(CERT_FILE, "wb")
-    f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
-    f.close()
-    f=open(KEY_FILE, "wb")
-    f.write(crypto.dump_privatekey(crypto.FILETYPE_PEM, k))
-    f.close()
-    f=open(CA_FILE, "wb")
-    f.write(crypto.dump_certificate(crypto.FILETYPE_PEM, cert))
-    f.close()
-    #Generating JKS
-    dumped_cert = crypto.dump_certificate(crypto.FILETYPE_ASN1, cert)
-    dumped_key = crypto.dump_privatekey(crypto.FILETYPE_ASN1, k)
-    pke = jks.PrivateKeyEntry.new('self signed cert', [dumped_cert], dumped_key, 'rsa_raw')
-    keystore = jks.KeyStore.new('jks', [pke])
-    keystore.save(KEYSTORE_FILE, '') #password is empty
+    print(run(["openssl", "req", "-x509", "-nodes", "-newkey", "rsa:4096", 
+        "-keyout", KEY_FILE,
+        "-out", CERT_FILE,
+        "-days", '365',
+        "-subj", '/O=AIOTES Instance/CN='+os.getenv('AIOTES_HOSTNAME','localhost')
+        ]))
+    print(run(['ln', CERT_FILE, CA_FILE]))
 
 def backup_dir(src,bkp):
     print (datetime.datetime.now()," Backing up " + src + " to " + bkp)
@@ -120,6 +111,17 @@ def certonly():
 
 
 if __name__ == "__main__":
+    print(datetime.datetime.now()," seting up dir, and switching uid.")
+    os.makedirs('/var/log/letsencrypt/')
+    os.chown("/var/log/letsencrypt/", 1000, 1000)
+    os.chown("/var/lib/letsencrypt/", 1000, 1000)
+    os.chown("/etc/letsencrypt/", 1000, 1000)
+    for root, dirs, files in os.walk("/etc/letsencrypt/"):  
+      for momo in dirs:  
+        os.chown(os.path.join(root, momo), 1000, 1000)
+      for momo in files:
+        os.chown(os.path.join(root, momo), 1000, 1000)
+    os.setuid(1000)
     print(datetime.datetime.now()," Initialising Certbot pySchedule")
     certonly()
     schedule.every().monday.do(certonly)
