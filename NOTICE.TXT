@@ -1,0 +1,9 @@
+AIoTES Certbot Certificate Manager
+Copyright 2020 Universidad Politécnica de Madrid.
+Life Supporting Technologies
+
+This product includes software developed at
+Univseridad Politécnica de Madrid (http://www.upm.es/).
+
+This code heavily relies on the Certbot (https://certbot.eff.org/) 
+software component, developed by the Electronic Frontier Foundation.
